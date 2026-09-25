@@ -228,7 +228,7 @@ function Features() {
               className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 p-5 text-center dark:border-white/10"
             >
               <div className="flex h-12 items-center justify-center rounded-lg bg-white px-3 dark:bg-white/90">
-                <img src={c.logo} alt="" className="max-h-9 max-w-[7rem]" />
+                <img src={c.logo} alt="" className="h-9 w-9 object-contain" />
               </div>
               <span className="font-medium text-slate-900 dark:text-white">{c.name}</span>
             </div>
