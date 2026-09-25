@@ -3,8 +3,9 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, monospace;
+  /* Same system stacks as flink.apache.org: no web font to download. */
+  --font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: Menlo, 'Lucida Console', monospace;
 
   /* Glacier palette: ice cyan -> indigo (the app's primary). */
   --color-ice-300: #67e8f9;
