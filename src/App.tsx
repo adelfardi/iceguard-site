@@ -58,6 +58,7 @@ export default function App() {
       <Header />
       <main>
         <Hero />
+        <HeroCommand />
         <Features />
         <Demo />
         <QuickStart />
@@ -129,47 +130,73 @@ function Header() {
 
 function Hero() {
   return (
-    <div className="relative overflow-hidden">
-      <div className="aurora absolute inset-0 -z-10" />
-      <div className="grid-lines absolute inset-0 -z-10" />
-      <div className="mx-auto max-w-6xl px-4 pb-20 pt-16 text-center sm:px-6 sm:pt-24">
-        <a
-          href={LINKS.releases}
-          className="mb-8 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600 backdrop-blur transition hover:border-ice-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
-        >
-          <span className="rounded-full bg-ice-500/15 px-2 py-0.5 text-ice-500">v{RELEASE_TAG}</span>
-          Open source · Apache 2.0
-          <ArrowRight className="h-3.5 w-3.5" />
-        </a>
-        <img src="ice.png" alt="IceGuard logo" className="mx-auto mb-6 h-24 w-24 drop-shadow-[0_10px_30px_rgba(6,182,212,0.35)]" />
-        <h1 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl dark:text-white">
-          The web console for your <span className="text-gradient">Apache Iceberg™</span> tables
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-400">
-          Browse, inspect and maintain Iceberg tables across REST, Nessie, Polaris and Unity catalogs, from
-          schema evolution to scheduled compaction, in one self-hosted UI.
-        </p>
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+    <div className="relative overflow-hidden bg-gradient-to-br from-sky-600 via-glacier-600 to-indigo-800 text-white dark:from-sky-900 dark:via-indigo-950 dark:to-abyss-950">
+      <div className="grid-lines absolute inset-0 opacity-40" />
+      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 pb-32 pt-14 sm:px-6 md:grid-cols-[2fr_3fr] md:gap-14 md:pb-40 md:pt-20">
+        {/* Icon on the left, like the Flink squirrel */}
+        <img
+          src="logo-1024.png"
+          alt="IceGuard logo"
+          width={1024}
+          height={1024}
+          className="mx-auto w-44 rounded-full bg-white shadow-[0_25px_60px_rgba(6,182,212,0.45)] ring-8 ring-white/15 sm:w-56 md:w-full md:max-w-sm"
+        />
+
+        {/* Description on the right */}
+        <div className="text-center md:text-left">
           <a
-            href="#quick-start"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-ice-500 to-glacier-500 px-6 py-3 font-semibold text-white shadow-lg shadow-glacier-500/25 transition hover:brightness-110"
+            href={LINKS.releases}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur transition hover:bg-white/20"
           >
-            <Rocket className="h-4 w-4" /> Get started
+            <span className="rounded-full bg-white/20 px-2 py-0.5">v{RELEASE_TAG}</span>
+            Open source · Apache 2.0
+            <ArrowRight className="h-3.5 w-3.5" />
           </a>
-          <a
-            href={LINKS.repo}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-800 transition hover:border-slate-400 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-          >
-            <GithubIcon className="h-4 w-4" /> Star on GitHub
-          </a>
-        </div>
-        <div className="mx-auto mt-12 max-w-2xl text-left">
-          <CodeBlock code={HERO_COMMAND} />
-          <p className="mt-2 text-center text-xs text-slate-500">
-            Then open <span className="font-mono">http://localhost:8090</span>
+          <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">IceGuard</h1>
+          <p className="mt-4 text-2xl font-semibold text-ice-300 sm:text-3xl">
+            The web console for your Apache Iceberg™ tables
           </p>
+          <p className="mt-5 text-lg leading-relaxed text-white/85">
+            Browse, inspect and maintain Iceberg tables across REST, Nessie, Polaris and Unity catalogs, from
+            schema evolution to scheduled compaction, in one self-hosted UI.
+          </p>
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row md:justify-start sm:justify-center">
+            <a
+              href="#quick-start"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-glacier-600 shadow-lg transition hover:bg-ice-300 hover:text-abyss-900"
+            >
+              <Rocket className="h-4 w-4" /> Get started
+            </a>
+            <a
+              href={LINKS.repo}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/30 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
+            >
+              <GithubIcon className="h-4 w-4" /> Star on GitHub
+            </a>
+          </div>
         </div>
       </div>
+
+      {/* Wave into the page background, as on flink.apache.org */}
+      <svg
+        className="absolute inset-x-0 bottom-0 h-16 w-full text-white sm:h-24 dark:text-abyss-950"
+        viewBox="0 0 1440 120"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path fill="currentColor" d="M0 70 C 240 130 480 10 720 50 C 960 90 1200 120 1440 40 L1440 120 L0 120 Z" />
+      </svg>
+    </div>
+  );
+}
+
+function HeroCommand() {
+  return (
+    <div className="mx-auto -mt-4 max-w-2xl px-4 pb-4 sm:px-6">
+      <CodeBlock code={HERO_COMMAND} />
+      <p className="mt-2 text-center text-xs text-slate-500">
+        Then open <span className="font-mono">http://localhost:8090</span>
+      </p>
     </div>
   );
 }
