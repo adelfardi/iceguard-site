@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IceGuard: the web console for Apache Iceberg tables</title>
+    <meta name="description" content="Open-source console to browse, inspect and maintain Apache Iceberg tables across REST, Nessie, Polaris and Unity catalogs." />
+    <meta property="og:title" content="IceGuard" />
+    <meta property="og:description" content="Browse, inspect and maintain Apache Iceberg tables across all your catalogs." />
+    <meta property="og:image" content="./og.png" />
+    <meta name="twitter:card" content="summary" />
+    <script>
+      // Apply the saved/system theme before first paint to avoid a flash.
+      try {
+        const t = localStorage.getItem('theme');
+        const dark = t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', dark);
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

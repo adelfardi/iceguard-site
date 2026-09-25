@@ -1,0 +1,56 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, monospace;
+
+  /* Glacier palette: ice cyan -> indigo (the app's primary). */
+  --color-ice-300: #67e8f9;
+  --color-ice-400: #22d3ee;
+  --color-ice-500: #06b6d4;
+  --color-glacier-400: #818cf8;
+  --color-glacier-500: #6366f1;
+  --color-glacier-600: #4f46e5;
+  --color-abyss-900: #0b1120;
+  --color-abyss-950: #060a16;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  @apply bg-white text-slate-800 antialiased dark:bg-abyss-950 dark:text-slate-200;
+}
+
+::selection {
+  @apply bg-ice-300/40;
+}
+
+.text-gradient {
+  @apply bg-gradient-to-r from-ice-400 via-sky-500 to-glacier-500 bg-clip-text text-transparent;
+}
+
+/* Soft aurora glow behind the hero. */
+.aurora {
+  background:
+    radial-gradient(40rem 20rem at 20% 10%, rgb(34 211 238 / 0.18), transparent 70%),
+    radial-gradient(40rem 22rem at 80% 0%, rgb(99 102 241 / 0.2), transparent 70%);
+}
+
+.grid-lines {
+  background-image:
+    linear-gradient(to right, rgb(148 163 184 / 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(148 163 184 / 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at top, black 30%, transparent 75%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
