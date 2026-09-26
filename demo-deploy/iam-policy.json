@@ -12,13 +12,29 @@
       "Effect": "Allow",
       "Action": "s3:ListBucket",
       "Resource": "arn:aws:s3:::CHANGE-ME-bucket",
-      "Condition": { "StringLike": { "s3:prefix": ["polaris-demo", "polaris-demo/*"] } }
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "polaris-demo",
+            "polaris-demo/*",
+            "polaris-catalogs",
+            "polaris-catalogs/*"
+          ]
+        }
+      }
     },
     {
       "Sid": "ReadWriteDemoObjects",
       "Effect": "Allow",
-      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-      "Resource": "arn:aws:s3:::CHANGE-ME-bucket/polaris-demo/*"
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::CHANGE-ME-bucket/polaris-demo/*",
+        "arn:aws:s3:::CHANGE-ME-bucket/polaris-catalogs/*"
+      ]
     }
   ]
 }

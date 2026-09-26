@@ -26,7 +26,10 @@ def load_env(path: Path) -> dict:
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
-            env[k.strip()] = v.strip()
+            v = v.strip()
+            if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":  # quoted value (shell/compose style)
+                v = v[1:-1]
+            env[k.strip()] = v
     return env
 
 
@@ -201,13 +204,15 @@ def ensure_pipelines(cat: int) -> None:
         print(f"pipeline {p['name']}: created (disabled)")
 
 
-def main() -> None:
-    if ENV.get("POLARIS_AWS_ACCESS_KEY_ID") == "CHANGE-ME":
-        sys.exit("Set the POLARIS_AWS_* keys in .env first (or leave them empty on EC2).")
-    print(f"Seeding {BASE}")
-    catalog = ensure_catalog({
-        "name": "polaris-aws", "uri": "http://polaris:8181/api/catalog", "warehouse": ENV["POLARIS_CATALOG_NAME"],
-        "vendor": "POLARIS", "authType": "OAUTH2", "tags": ["demo", "aws"],
+SHOWCASE = "retail-lakehouse-showcase"      # the catalog with branches, tags and schema history
+SHOWCASE_TAGS = ["showcase", "branches", "schema-evolution", "aws"]
+LEGACY_NAMES = ["polaris-aws"]              # earlier name of the showcase catalog
+
+
+def polaris_catalog(name: str, warehouse: str, tags: list) -> dict:
+    return {
+        "name": name, "uri": "http://polaris:8181/api/catalog", "warehouse": warehouse,
+        "vendor": "POLARIS", "authType": "OAUTH2", "tags": tags,
         "credentials": {
             "credential": f"{ENV['POLARIS_ROOT_CLIENT_ID']}:{ENV['POLARIS_ROOT_CLIENT_SECRET']}",
             "oauth2-server-uri": "http://polaris:8181/api/catalog/v1/oauth/tokens",
@@ -221,11 +226,108 @@ def main() -> None:
                 "s3.secret-access-key": ENV["POLARIS_AWS_SECRET_ACCESS_KEY"]}
                if ENV.get("POLARIS_AWS_ACCESS_KEY_ID") else {}),
         },
-    })
+    }
+
+
+def ensure_showcase() -> int:
+    """The showcase catalog, renamed in place from a legacy name (same id: widgets and pipelines
+    keep pointing at it)."""
+    spec = polaris_catalog(SHOWCASE, ENV["POLARIS_CATALOG_NAME"], SHOWCASE_TAGS)
+    by_name = {c["name"]: c for c in call("GET", "/catalogs")}
+    for old in LEGACY_NAMES:
+        if old in by_name and SHOWCASE not in by_name:
+            call("PUT", f"/catalogs/{by_name[old]['id']}", spec)
+            print(f"catalog {old}: renamed to {SHOWCASE} (id={by_name[old]['id']})")
+            return by_name[old]["id"]
+    return ensure_catalog(spec)
+
+
+def batches(n: int, size: int, make_row, seed: int):
+    rnd = random.Random(seed)
+    return [[make_row(rnd, b, i) for i in range(size)] for b in range(n)]
+
+
+def col(name, type_, required=False, doc=None):
+    return {"name": name, "type": type_, "required": required, "doc": doc}
+
+
+D0 = date(2026, 3, 1)
+T0 = datetime(2026, 9, 1, tzinfo=timezone.utc)
+
+# Extra catalogs: realistic names, each a real Polaris catalog (see POLARIS_EXTRA_CATALOGS) with a
+# few namespaces/tables. They only need to look alive; the showcase holds the rich history.
+EXTRA_CATALOGS = [
+    ("finance-prod", ["prod", "finance", "pii"], [
+        ("ledger", {"name": "transactions", "columns": [
+            col("txn_id", "long", True), col("account_id", "long", True), col("amount", "double"),
+            col("currency", "string"), col("booked_on", "date", True)],
+            "partitionFields": [{"sourceColumn": "booked_on", "transform": "month"}]},
+         batches(4, 50, lambda r, b, i: {
+             "txn_id": b * 1000 + i, "account_id": r.randint(10_000, 10_200),
+             "amount": round(r.uniform(-2_500, 9_000), 2), "currency": r.choice(["EUR", "EUR", "USD", "GBP"]),
+             "booked_on": (D0 + timedelta(days=b * 31 + r.randint(0, 27))).isoformat()}, 11)),
+        ("reporting", {"name": "monthly_revenue", "columns": [
+            col("month", "date", True), col("region", "string", True), col("revenue", "double")]},
+         batches(3, 4, lambda r, b, i: {
+             "month": (D0 + timedelta(days=b * 31)).isoformat(),
+             "region": ["EMEA", "NA", "APAC", "LATAM"][i], "revenue": round(r.uniform(80_000, 450_000), 2)}, 12)),
+    ]),
+    ("marketing-analytics", ["prod", "marketing"], [
+        ("campaigns", {"name": "ad_spend", "columns": [
+            col("campaign_id", "string", True), col("channel", "string"), col("spend", "double"),
+            col("clicks", "long"), col("day", "date", True)],
+            "partitionFields": [{"sourceColumn": "day", "transform": "day"}]},
+         batches(5, 12, lambda r, b, i: {
+             "campaign_id": f"cmp-{r.randint(100, 120)}", "channel": r.choice(["search", "social", "display", "email"]),
+             "spend": round(r.uniform(50, 2_000), 2), "clicks": r.randint(10, 5_000),
+             "day": (date(2026, 9, 1) + timedelta(days=b)).isoformat()}, 13)),
+    ]),
+    ("data-science-sandbox", ["dev", "sandbox"], [
+        ("experiments", {"name": "churn_features", "columns": [
+            col("customer_id", "long", True), col("tenure_months", "int"), col("monthly_charges", "double"),
+            col("churn_score", "double", doc="Model v3 output")]},
+         batches(2, 80, lambda r, b, i: {
+             "customer_id": b * 1000 + i, "tenure_months": r.randint(1, 72),
+             "monthly_charges": round(r.uniform(15, 120), 2), "churn_score": round(r.random(), 3)}, 14)),
+    ]),
+    # Registered but left empty: a demo lakehouse also has catalogs nobody filled yet.
+    ("hr-people-analytics", ["prod", "hr", "pii"], []),
+    ("supply-chain-dev", ["dev", "supply-chain"], []),
+    ("customer-360-uat", ["uat", "crm"], []),
+    ("iot-telemetry-staging", ["staging", "iot"], [
+        ("sensors", {"name": "readings", "columns": [
+            col("device_id", "string", True), col("metric", "string", True), col("value", "double"),
+            col("recorded_at", "timestamptz", True)],
+            "partitionFields": [{"sourceColumn": "recorded_at", "transform": "day"}]},
+         batches(6, 60, lambda r, b, i: {
+             "device_id": f"dev-{r.randint(1, 40):03d}", "metric": r.choice(["temperature", "humidity", "vibration"]),
+             "value": round(r.uniform(0, 100), 2),
+             "recorded_at": (T0 + timedelta(days=b, seconds=r.randint(0, 86_399))).isoformat()}, 15)),
+    ]),
+]
+
+
+def main() -> None:
+    if ENV.get("POLARIS_AWS_ACCESS_KEY_ID") == "CHANGE-ME":
+        sys.exit("Set the POLARIS_AWS_* keys in .env first (or leave them empty on EC2).")
+    print(f"Seeding {BASE}")
+    catalog = ensure_showcase()
     ensure_table(catalog, "sales", ORDERS, order_batches())
     ensure_table(catalog, "web", EVENTS, event_batches())
     ensure_pipelines(catalog)
     ensure_widgets(catalog)
+
+    wanted = set(ENV.get("POLARIS_EXTRA_CATALOGS", "").split())
+    for name, tags, tables in EXTRA_CATALOGS:
+        if name not in wanted:
+            print(f"catalog {name}: skipped (not in POLARIS_EXTRA_CATALOGS)")
+            continue
+        cat = ensure_catalog(polaris_catalog(name, name, tags))
+        for ns, table, rows in tables:
+            try:
+                ensure_table(cat, ns, {"properties": {"write.format.default": "parquet"}, **table}, rows)
+            except SystemExit as e:  # e.g. S3 AccessDenied: report it and go on with the others
+                print(f"  {ns}.{table['name']}: FAILED, {str(e)[:160]}")
     print(f"Done. Open {BASE}")
 
 

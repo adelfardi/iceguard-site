@@ -35,7 +35,9 @@ Apache Polaris.
 Temporary STS credentials (`aws sso`, assumed roles) expire after about an hour. Use a **dedicated
 IAM user with an access key** instead: no session token, no expiry.
 
-1. Create a bucket (or reuse one) and pick a prefix, e.g. `s3://my-bucket/polaris-demo`.
+1. Create a bucket (or reuse one) and pick a prefix, e.g. `s3://my-bucket/polaris-demo`. The extra
+   catalogs (`POLARIS_EXTRA_CATALOGS`) go under the sibling prefix `polaris-catalogs/` (Polaris
+   rejects catalogs whose locations overlap); `iam-policy.json` allows both prefixes.
 2. IAM → Users → create `iceguard-demo-polaris` (no console access), attach an inline policy from
    `iam-policy.json` (replace `CHANGE-ME-bucket`, and `polaris-demo` if you use another prefix).
 3. Security credentials → **Create access key** → "Application running outside AWS".
@@ -60,8 +62,12 @@ cp .env.sample .env && chmod 600 .env && vi .env                  # secrets, EDG
 docker compose up -d postgres
 docker compose --profile bootstrap run --rm polaris-bootstrap     # once, on a fresh volume
 docker compose up -d
-./polaris-init.sh                                                 # Polaris catalog on S3 (idempotent)
+./polaris-init.sh                                                 # Polaris catalogs on S3 (idempotent)
 ```
+
+`polaris-init.sh` creates the showcase catalog (`POLARIS_CATALOG_NAME`) and every extra catalog of
+`POLARIS_EXTRA_CATALOGS` (quoted, space-separated) at `s3://<bucket>/polaris-catalogs/<name>`
+(override with `POLARIS_EXTRA_S3_LOCATION`).
 
 Then point the reverse proxy at the guard. With Caddy (reload gracefully afterwards):
 
@@ -87,7 +93,8 @@ container whose settings changed (e.g. the backend reads `POLARIS_S3_REGION` too
 python3 seed.py          # https://$ICEGUARD_DOMAIN with the admin token from .env
 ```
 
-Registers `polaris-aws`, creates `sales.orders` and `web.events` with several inserts each (so every
+Registers the showcase catalog `retail-lakehouse-showcase` (renaming the older `polaris-aws` in
+place), the extra catalogs with a namespace and a table each, and creates `sales.orders` and `web.events` with several inserts each (so every
 table has a snapshot history), three maintenance pipelines and the dashboard widgets. Re-running only
 adds what is missing.
 

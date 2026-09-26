@@ -27,3 +27,4 @@ dist-ssr
 .env
 .env.*
 !.env.sample
+__pycache__/
