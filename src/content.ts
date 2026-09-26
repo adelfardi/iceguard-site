@@ -1,9 +1,10 @@
 // Everything the page says lives here, so updating a release or a command is a one-file change.
 
 export const REPO = 'https://github.com/adelfardi/iceguard';
-export const RELEASE_TAG = '0.2.0'; // last release with published images + demo assets
+export const RELEASE_TAG = '0.3.0'; // latest release with published images
 
-export const DEMO_VIDEO = `${REPO}/releases/download/v${RELEASE_TAG}/demo.mp4`;
+// The demo video is a release asset of v0.2.0 (not re-recorded since): pinned on its own.
+export const DEMO_VIDEO = `${REPO}/releases/download/v0.2.0/demo.mp4`;
 
 export const LINKS = {
   repo: REPO,
