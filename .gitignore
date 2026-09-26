@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Demo deployment secrets (demo-deploy/.env.sample is the template)
+.env
+.env.*
+!.env.sample

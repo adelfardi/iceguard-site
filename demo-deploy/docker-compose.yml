@@ -1,0 +1,119 @@
+# IceGuard public read-only demo: read-only guard (Caddy) + IceGuard + Apache Polaris on real AWS S3.
+# Nothing is published publicly: the VM's existing reverse proxy terminates HTTPS and forwards
+# ICEGUARD_DOMAIN to `iceguard-demo-guard:80` on its Docker network (EDGE_NETWORK). The backend
+# listens on 127.0.0.1:8080 for admin over an SSH tunnel; Postgres and Polaris are internal.
+#
+# Uses the published GHCR images (ICEGUARD_VERSION in .env): no source checkout needed on the VM.
+#   docker compose --profile bootstrap run --rm polaris-bootstrap   # once, on a fresh volume
+#   docker compose up -d
+#   ./polaris-init.sh                                              # Polaris catalog on S3
+name: iceguard-demo
+
+services:
+  # Read-only guard. The VM's existing reverse proxy terminates HTTPS for
+  # ICEGUARD_DOMAIN and forwards to this container over its network, by the alias below.
+  guard:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      ICEGUARD_ADMIN_TOKEN: ${ICEGUARD_ADMIN_TOKEN:?}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on: [frontend]
+    networks:
+      default: {}
+      edge:
+        aliases: [iceguard-demo-guard]
+
+  frontend:
+    image: ghcr.io/adelfardi/iceguard-frontend:${ICEGUARD_VERSION:?}
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:8080
+      ICEGUARD_DEMO_MODE: ${ICEGUARD_DEMO_MODE:-true}   # read-only UI, served as /config.js
+    depends_on: [backend]
+
+  backend:
+    image: ghcr.io/adelfardi/iceguard-backend:${ICEGUARD_VERSION:?}   # slim image, no Spark
+    restart: unless-stopped
+    environment:
+      QUARKUS_DATASOURCE_DB_KIND: postgresql
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/iceguard
+      QUARKUS_DATASOURCE_USERNAME: iceguard
+      QUARKUS_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?}
+      QUARKUS_OIDC_ENABLED: "false"
+      QUARKUS_HTTP_CORS_ORIGINS: https://${ICEGUARD_DOMAIN:?}
+      AWS_REGION: ${POLARIS_S3_REGION:?}
+    ports:
+      - "127.0.0.1:8080:8080"         # admin only: ssh -L 8080:localhost:8080 <vm>
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits: { cpus: "2", memory: 2g }
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: iceguard
+      POSTGRES_USER: iceguard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-dbs.sql:/docker-entrypoint-initdb.d/10-polaris-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iceguard -d iceguard"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 60s               # first boot runs initdb + init-dbs.sql
+
+  # ── Apache Polaris (Postgres-backed) on real AWS S3 ──
+  polaris-bootstrap:
+    image: apache/polaris-admin-tool:latest
+    profiles: ["bootstrap"]           # one-shot, on a fresh volume only
+    environment:
+      polaris.persistence.type: relational-jdbc
+      quarkus.datasource.db-kind: postgresql
+      quarkus.datasource.jdbc.url: jdbc:postgresql://postgres:5432/polaris
+      quarkus.datasource.username: iceguard
+      quarkus.datasource.password: ${POSTGRES_PASSWORD:?}
+    command:
+      - bootstrap
+      - --realm=POLARIS
+      - --credential=POLARIS,${POLARIS_ROOT_CLIENT_ID:?},${POLARIS_ROOT_CLIENT_SECRET:?}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  polaris:
+    image: apache/polaris:latest
+    restart: unless-stopped
+    environment:
+      # Long-lived IAM user keys: no session token, so nothing expires. Leave both empty on EC2
+      # with an instance profile: the SDK then uses (and rotates) the role's credentials.
+      AWS_ACCESS_KEY_ID: ${POLARIS_AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${POLARIS_AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${POLARIS_S3_REGION:?}
+      polaris.persistence.type: relational-jdbc
+      polaris.realm-context.realms: POLARIS
+      quarkus.datasource.db-kind: postgresql
+      quarkus.datasource.jdbc.url: jdbc:postgresql://postgres:5432/polaris
+      quarkus.datasource.username: iceguard
+      quarkus.datasource.password: ${POSTGRES_PASSWORD:?}
+      JAVA_OPTS_APPEND: >-
+        -Dpolaris.features.SKIP_CREDENTIAL_SUBSCOPING_INDIRECTION=true
+        -Dpolaris.catalog.io.default-options.s3.region=${POLARIS_S3_REGION:?}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+
+networks:
+  edge:
+    external: true
+    name: ${EDGE_NETWORK:?}         # Docker network of the VM's existing reverse proxy

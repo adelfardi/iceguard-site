@@ -1,0 +1,21 @@
+# Read-only guard, plain HTTP: the VM's existing reverse proxy terminates HTTPS for the domain
+# and forwards here. {$ICEGUARD_ADMIN_TOKEN} is read when Caddy starts: after changing it in .env,
+# run `docker compose up -d --force-recreate guard` (a reload does not re-read it).
+{
+	auto_https off
+}
+
+:80 {
+	# Public read-only demo: any API write needs the admin token.
+	@write {
+		path /api/*
+		not method GET HEAD OPTIONS
+		not header X-IceGuard-Admin-Token {$ICEGUARD_ADMIN_TOKEN}
+	}
+	respond @write "IceGuard public demo is read-only" 403
+
+	reverse_proxy frontend:80 {
+		# Never forward the token to the app.
+		header_up -X-IceGuard-Admin-Token
+	}
+}
