@@ -7,6 +7,7 @@ export const DEMO_VIDEO = `${REPO}/releases/download/v${RELEASE_TAG}/demo.mp4`;
 
 export const LINKS = {
   repo: REPO,
+  demo: 'https://demo.iceguard.cloud',
   releases: `${REPO}/releases`,
   issues: `${REPO}/issues`,
   contributing: `${REPO}/blob/main/CONTRIBUTING.md`,

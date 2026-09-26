@@ -13,6 +13,7 @@ import {
   History,
   Layers,
   Menu,
+  MonitorPlay,
   Rocket,
   Ship,
   Wrench,
@@ -47,6 +48,7 @@ const FEATURE_ICONS: Record<Feature['icon'], typeof Boxes> = {
 const NAV = [
   { href: '#features', label: 'Features' },
   { href: '#demo', label: 'Demo' },
+  { href: LINKS.demo, label: 'Live demo' },
   { href: '#quick-start', label: 'Quick start' },
   { href: '#helm', label: 'Kubernetes' },
   { href: '#architecture', label: 'Architecture' },
@@ -169,6 +171,12 @@ function Hero() {
               <Rocket className="h-4 w-4" /> Get started
             </a>
             <a
+              href={LINKS.demo}
+              className="inline-flex items-center gap-2 rounded-xl border border-ice-500/40 bg-ice-500/10 px-6 py-3 font-semibold text-ice-500 transition hover:bg-ice-500/20"
+            >
+              <MonitorPlay className="h-4 w-4" /> Live demo
+            </a>
+            <a
               href={LINKS.repo}
               className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-800 transition hover:border-slate-400 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
             >
@@ -249,6 +257,18 @@ function Demo() {
         intro="Browse tagged catalogs, inspect a table's metadata, snapshots, storage and timeline, then run a Spark maintenance action and watch its result and logs."
       >
         <DemoVideo src={DEMO_VIDEO} />
+        <div className="mt-10 flex flex-col items-center gap-3 text-center">
+          <p className="text-slate-600 dark:text-slate-400">
+            Rather click around yourself? The live demo runs on Apache Polaris with real branches, tags and
+            schema history, read-only.
+          </p>
+          <a
+            href={LINKS.demo}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-ice-500 to-glacier-500 px-6 py-3 font-semibold text-white shadow-lg shadow-glacier-500/25 transition hover:brightness-110"
+          >
+            <MonitorPlay className="h-4 w-4" /> Open the live demo
+          </a>
+        </div>
         <p className="mt-6 text-center text-sm text-slate-500">
           Video not loading?{' '}
           <a href={DEMO_VIDEO} className="font-medium text-ice-500 hover:underline">
