@@ -87,6 +87,7 @@ function Header() {
             <a
               key={n.href}
               href={n.href}
+              {...(n.href === LINKS.demo ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             >
               {n.label}
@@ -118,6 +119,7 @@ function Header() {
             <a
               key={n.href}
               href={n.href}
+              {...(n.href === LINKS.demo ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               onClick={() => setOpen(false)}
               className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300"
             >
@@ -172,6 +174,8 @@ function Hero() {
             </a>
             <a
               href={LINKS.demo}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-xl border border-ice-500/40 bg-ice-500/10 px-6 py-3 font-semibold text-ice-500 transition hover:bg-ice-500/20"
             >
               <MonitorPlay className="h-4 w-4" /> Live demo
@@ -264,6 +268,8 @@ function Demo() {
           </p>
           <a
             href={LINKS.demo}
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-ice-500 to-glacier-500 px-6 py-3 font-semibold text-white shadow-lg shadow-glacier-500/25 transition hover:brightness-110"
           >
             <MonitorPlay className="h-4 w-4" /> Open the live demo
