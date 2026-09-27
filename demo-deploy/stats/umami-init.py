@@ -71,7 +71,7 @@ def main():
         name, host = item.split("|", 1)
         site = existing.get(host) or call("POST", "/websites", {"name": name, "domain": host}, token)
         print(f"\n{name} ({host})  website id: {site['id']}")
-        print(f'  <script defer src="https://{domain}/script.js" data-website-id="{site["id"]}"></script>')
+        print(f'  <script defer src="https://{domain}/pulse.js" data-website-id="{site["id"]}"></script>')
 
 
 if __name__ == "__main__":

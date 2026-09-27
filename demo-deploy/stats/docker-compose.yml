@@ -14,6 +14,10 @@ services:
       DATABASE_TYPE: postgresql
       APP_SECRET: ${UMAMI_APP_SECRET:?}
       DISABLE_TELEMETRY: "1"
+      # Neutral names for the tracker and its endpoint: the defaults (script.js, /api/send) are on
+      # common ad-blocker lists, which silently drop the visit.
+      TRACKER_SCRIPT_NAME: ${UMAMI_TRACKER_SCRIPT_NAME:-pulse.js}
+      COLLECT_API_ENDPOINT: ${UMAMI_COLLECT_PATH:-/api/pulse}
     ports:
       - "127.0.0.1:3100:3000"         # admin/init only (umami-init.sh, SSH tunnel)
     depends_on:
