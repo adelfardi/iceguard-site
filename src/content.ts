@@ -3,8 +3,8 @@
 export const REPO = 'https://github.com/adelfardi/iceguard';
 export const RELEASE_TAG = '0.3.0'; // latest release with published images
 
-// The demo video is a release asset of v0.2.0 (not re-recorded since): pinned on its own.
-export const DEMO_VIDEO = `${REPO}/releases/download/v0.2.0/demo.mp4`;
+// The demo video is a release asset (re-recorded for 0.3.0); pinned on its own, as later releases may reuse it.
+export const DEMO_VIDEO = `${REPO}/releases/download/v0.3.0/demo.mp4`;
 
 export const LINKS = {
   repo: REPO,
