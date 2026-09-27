@@ -117,7 +117,7 @@ export function DemoVideo({ src }: { src: string }) {
               <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/95 text-glacier-600 shadow-lg ring-8 ring-white/10 transition group-hover:scale-110">
                 <Play className="ml-1 h-7 w-7 fill-current" />
               </span>
-              <span className="relative text-sm text-slate-300">Watch the 70-second tour</span>
+              <span className="relative text-sm text-slate-300">Watch the 80-second tour</span>
             </button>
           )}
         </div>

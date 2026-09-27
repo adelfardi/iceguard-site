@@ -263,7 +263,7 @@ function Demo() {
         id="demo"
         eyebrow="Demo"
         title="See it in action"
-        intro="Browse tagged catalogs, inspect a table's metadata, snapshots, storage and timeline, then run a Spark maintenance action and watch its result and logs."
+        intro="From the dashboard to a table's branches and tags, its storage health down to each partition, the timeline and schema evolution, then a Spark compaction with its result and logs."
       >
         <DemoVideo src={DEMO_VIDEO} />
         <div className="mt-10 flex flex-col items-center gap-3 text-center">
