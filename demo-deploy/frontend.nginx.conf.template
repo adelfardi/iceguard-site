@@ -1,0 +1,40 @@
+# Demo-only copy of frontend/nginx.conf.template from IceGuard v0.3.0, mounted over the image's
+# template by docker-compose.yml. Only change: the self-hosted Umami tag is injected into the HTML
+# (sub_filter). Re-sync with the upstream template when upgrading ICEGUARD_VERSION.
+# Rendered at container start: ${BACKEND_URL} is substituted by envsubst
+# (the official nginx image only substitutes real env vars, so nginx's own
+# $host / $uri / $scheme variables below are left untouched).
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Reverse-proxy API calls to the backend. proxy_pass without a URI path
+    # preserves the original /api/... prefix, which the backend serves.
+    location /api/ {
+        proxy_pass ${BACKEND_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Runtime config read by index.html before the app boots. ${ICEGUARD_DEMO_MODE} is rendered
+    # by envsubst at container start, so a published image can run as the public read-only demo.
+    location = /config.js {
+        default_type application/javascript;
+        add_header Cache-Control "no-store";
+        return 200 'window.__ICEGUARD_CONFIG__ = { demoMode: "${ICEGUARD_DEMO_MODE}" === "true" };';
+    }
+
+    # SPA fallback: serve index.html for client-side routes.
+    location / {
+        # Visit stats (Umami, cookie-less): inject the tracker into every HTML page.
+        sub_filter '</head>' '<script defer src="${UMAMI_SCRIPT_URL}" data-website-id="${UMAMI_WEBSITE_ID}" data-domains="${ICEGUARD_DOMAIN}"></script></head>';
+        sub_filter_once on;
+        try_files $uri $uri/ /index.html;
+    }
+}

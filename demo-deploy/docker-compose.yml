@@ -31,6 +31,12 @@ services:
     environment:
       BACKEND_URL: http://backend:8080
       ICEGUARD_DEMO_MODE: ${ICEGUARD_DEMO_MODE:-true}   # read-only UI, served as /config.js
+      # Visit stats: injected into the HTML by the template below (see stats/).
+      ICEGUARD_DOMAIN: ${ICEGUARD_DOMAIN:?}
+      UMAMI_SCRIPT_URL: ${UMAMI_SCRIPT_URL:?}
+      UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID:?}
+    volumes:
+      - ./frontend.nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
     depends_on: [backend]
 
   backend:

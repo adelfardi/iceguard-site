@@ -29,6 +29,8 @@ Apache Polaris.
 | `seed.py` | registers the catalog, demo tables, dashboard widgets and pipelines through the API |
 | `spark-story.sh`, `products-story.sql` | branches, tags and schema changes via Spark SQL |
 | `iam-policy.json` | least-privilege S3 policy for the Polaris IAM user |
+| `frontend.nginx.conf.template` | demo-only nginx template: injects the Umami tag into the HTML |
+| `stats/` | self-hosted Umami (visit statistics for the site and the demo) |
 
 ## 1. AWS: S3 for Polaris, with keys that never expire
 
@@ -126,6 +128,38 @@ network. Run it on the VM:
 ```
 
 Secrets reach Spark through a temporary `spark-defaults.conf` (0600, deleted on exit).
+
+## 5. Visit statistics (self-hosted Umami)
+
+`stats/` runs [Umami](https://umami.is) (cookie-less, no consent banner needed) with its own Postgres,
+served at `https://stats.iceguard.cloud` by the reverse proxy (alias `iceguard-stats-umami:3000` on
+`EDGE_NETWORK`; only `127.0.0.1:3100` is published on the VM).
+
+```bash
+cd stats && cp .env.sample .env && chmod 600 .env && vi .env
+docker compose up -d
+./umami-init.py          # replaces the default admin/umami password, creates the websites,
+                         # prints each website id and its <script> tag
+```
+
+Reverse-proxy block (Caddy):
+
+```
+stats.iceguard.cloud {
+	reverse_proxy iceguard-stats-umami:3000 {
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
+```
+
+- **Site:** the `<script>` tag lives in the site's `index.html`; buttons carry `data-umami-event`
+  (`live-demo`, `github`, `get-started`) to count clicks.
+- **Demo:** the tag is injected into the HTML by `frontend.nginx.conf.template` (a copy of the
+  IceGuard v0.3.0 nginx template plus a `sub_filter`), with `UMAMI_SCRIPT_URL` / `UMAMI_WEBSITE_ID`
+  from `.env`. Re-sync that template when upgrading `ICEGUARD_VERSION`.
+- Dashboard: `https://stats.iceguard.cloud` (user `admin`, password `UMAMI_ADMIN_PASSWORD` in
+  `stats/.env`), or `ssh -L 3100:localhost:3100 vm` then `http://localhost:3100`.
 
 ## Operations
 

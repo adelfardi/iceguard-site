@@ -1,0 +1,52 @@
+# Self-hosted, cookie-less visit statistics (Umami) for the IceGuard site and the public demo.
+# Served at https://STATS_DOMAIN by the VM's existing reverse proxy, which reaches the
+# `iceguard-stats-umami:3000` alias on its Docker network (EDGE_NETWORK). Only 127.0.0.1:3100 is
+# published, for umami-init.sh and admin over SSH.
+#   docker compose up -d && ./umami-init.sh
+name: iceguard-stats
+
+services:
+  umami:
+    image: ghcr.io/umami-software/umami:${UMAMI_VERSION:-postgresql-latest}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:?}@umami-db:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET:?}
+      DISABLE_TELEMETRY: "1"
+    ports:
+      - "127.0.0.1:3100:3000"         # admin/init only (umami-init.sh, SSH tunnel)
+    depends_on:
+      umami-db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits: { cpus: "1", memory: 512m }
+    networks:
+      default: {}
+      edge:
+        aliases: [iceguard-stats-umami]
+
+  umami-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:?}
+    volumes:
+      - umami-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  umami-db:
+
+networks:
+  edge:
+    external: true
+    name: ${EDGE_NETWORK:?}           # Docker network of the VM's existing reverse proxy
