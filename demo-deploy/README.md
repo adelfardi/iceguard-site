@@ -129,6 +129,19 @@ network. Run it on the VM:
 
 Secrets reach Spark through a temporary `spark-defaults.conf` (0600, deleted on exit).
 
+`events-health-story.sql` gives `web.events` one day partition per storage-health state (green,
+amber, red with tiny files needing compaction, amber and red from position delete files, written
+in merge-on-read). Demo files are tiny, so size the grading to them afterwards: the table's target
+file size and the (global) small-file threshold.
+
+```bash
+./spark-story.sh events-health-story.sql          # prints files and bytes per partition
+curl -X PUT http://localhost:8080/api/catalogs/1/namespaces/web/tables/events/properties \
+     -H 'Content-Type: application/json' \
+     -d '{"set":{"write.target-file-size-bytes":"117760"},"remove":[]}'      # 115 KB
+# then Storage tab > Health thresholds: small file size 16 KB (or PUT /api/settings/storage-health-thresholds)
+```
+
 ## 5. Visit statistics (self-hosted Umami)
 
 `stats/` runs [Umami](https://umami.is) (cookie-less, no consent banner needed) with its own Postgres,

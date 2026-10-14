@@ -146,7 +146,7 @@ def ensure_widgets(cat: int) -> None:
         {"title": "Orders storage", "widgetType": "storage-overview", **table_ref(cat, "sales", "orders")},
         {"title": "Products reliability", "widgetType": "maintenance-reliability",
          **table_ref(cat, "sales", "products")},
-        {"title": "Events file sizes", "widgetType": "file-histogram", **table_ref(cat, "web", "events")},
+        {"title": "Orders file sizes", "widgetType": "file-histogram", **table_ref(cat, "sales", "orders")},
         {"title": "Events: active partitions", "widgetType": "hot-partitions", **table_ref(cat, "web", "events")},
         {"title": "Catalog list", "widgetType": "catalog-list"},
     ]

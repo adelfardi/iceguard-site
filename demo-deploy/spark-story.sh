@@ -31,5 +31,5 @@ CONF
 docker run --rm --user root --network iceguard-demo_default \
   -v "$CONF:/opt/spark/conf/spark-defaults.conf:ro" \
   -v "$PWD/$SQL_FILE:/story.sql:ro" \
-  apache/spark:3.5.6 /opt/spark/bin/spark-sql --master 'local[2]' --driver-memory 1g -f /story.sql \
+  apache/spark:3.5.6 /opt/spark/bin/spark-sql --master 'local[2]' --driver-memory "${SPARK_DRIVER_MEMORY:-1g}" -f /story.sql \
   2> >(grep -vE ' (INFO|WARN) |^\s*$|:: |confs:|found org|downloading|artifacts|resolution report|modules|^\s+\||----' >&2)
